@@ -3,7 +3,7 @@ const GRID_SIZE = 20;
 const CELL_SIZE = 20;
 const INITIAL_SNAKE_LENGTH = 4;
 const GAME_SPEED = 150;
-const SPEED_BOOST_MULTIPLIER = 0.6; // 40% faster
+const SPEED_BOOST_MULTIPLIER = 0.6; // Faster
 const QUICK_PRESS_THRESHOLD = 80; // 80 milliseconds between presses
 const SPEED_RESET_DELAY = 400; // 400 milliseconds of inactivity to reset
 const REQUIRED_QUICK_PRESSES = 3;
@@ -15,15 +15,28 @@ let gameLoop, gameStarted;
 let lastKeyPressTimes = [];
 let speedBoostTimeout;
 let currentGameSpeed = GAME_SPEED;
+let isGameOver = false;
+let restartBtn;
 
 // Initialize the game
 window.onload = function() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     score = document.getElementById('score');
+    restartBtn = document.getElementById('restartBtn');
     
     // Add keyboard event listeners
     document.addEventListener('keydown', handleKeyPress);
+    
+    // Hide restart button initially
+    restartBtn.style.display = 'none';
+    restartBtn.onclick = function() {
+        isGameOver = false;
+        restartBtn.style.display = 'none';
+        gameStarted = true;
+        resetGame();
+        gameLoop = setInterval(moveSnake, currentGameSpeed);
+    };
     
     // Initialize game state
     resetGame();
@@ -97,6 +110,22 @@ function draw() {
         CELL_SIZE - 1,
         CELL_SIZE - 1
     );
+
+    // Draw Game Over message if needed
+    if (isGameOver) {
+        ctx.save();
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, canvas.height / 2 - 60, canvas.width, 120);
+        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 2 - 10);
+        ctx.font = '20px Arial';
+        ctx.fillText('Press Restart to play again', canvas.width / 2, canvas.height / 2 + 30);
+        ctx.restore();
+    }
 }
 
 function moveSnake() {
@@ -147,14 +176,20 @@ function isCollision(head) {
 function gameOver() {
     clearInterval(gameLoop);
     gameStarted = false;
-    alert('Game Over! Press Space to play again.');
+    isGameOver = true;
+    draw(); // Redraw to show the message
+    restartBtn.style.display = 'block'; // Show the restart button
 }
 
 function handleKeyPress(event) {
     if (event.code === 'Space') {
-        gameStarted = true;
-        resetGame();
-        gameLoop = setInterval(moveSnake, currentGameSpeed);
+        isGameOver = false;
+        restartBtn.style.display = 'none';
+        if (!gameStarted) {
+            gameStarted = true;
+            resetGame();
+            gameLoop = setInterval(moveSnake, currentGameSpeed);
+        }
         return;
     }
     
